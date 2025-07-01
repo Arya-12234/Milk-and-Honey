@@ -1,4 +1,5 @@
 import json
+import os
 
 import jwt
 import io
@@ -14,13 +15,43 @@ from rest_framework.exceptions import ValidationError, NotFound
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.parsers import MultiPartParser
-from PIL import Image
-from model.main import prediction
+# from PIL import Image
+# from model.main import prediction
 from .models import User
 from .serializers import UserSerializer
+import requests
+import dotenv
+dotenv.load_dotenv()
 
 from chatterbot import ChatBot
 from chatterbot.trainers import ChatterBotCorpusTrainer
+
+def convert_keys(obj):
+    """Convert keys with hyphens to underscores in nested dictionaries."""
+    if isinstance(obj, dict):
+        new_dict = {}
+        for key, value in obj.items():
+            new_key = key.replace('-', '_') if isinstance(key, str) else key
+            new_dict[new_key] = convert_keys(value)
+        return new_dict
+    elif isinstance(obj, list):
+        return [convert_keys(item) for item in obj]
+    else:
+        return obj
+
+@api_view(["GET"])
+def weather(request):
+    location = request.GET.get('location', 'nairobi')
+    data = {}
+    try:
+        response = requests.get(
+            f"https://api.weatherapi.com/v1/current.json?key={os.getenv('API_KEY')}&q={location}&aqi=yes")
+        if response.status_code == 200:
+            data = convert_keys(response.json())
+    except:
+            data = {}
+
+    return Response(data, status=200)
 
 @csrf_exempt
 @api_view(["POST"])
@@ -37,15 +68,16 @@ def chatbot(request):
 @api_view(["POST"])
 @parser_classes([MultiPartParser])
 def detection(request):
-    # return Response({"result": f"Plant is affected by Black Sport"}, status=status.HTTP_200_OK)
-    image = request.FILES.get('image')
-
-    if not image:
-        return Response({'error': 'No image provided'}, status=status.HTTP_400_BAD_REQUEST)
-
-    image = Image.open(io.BytesIO(image.read()))
-    result = prediction(image)
-    return Response({"result": f"Plant is affected by {result[0]}"}, status=status.HTTP_200_OK)
+    return Response({"result": "coming soon.."}, status=status.HTTP_200_OK)
+#     # return Response({"result": f"Plant is affected by Black Sport"}, status=status.HTTP_200_OK)
+#     image = request.FILES.get('image')
+#
+#     if not image:
+#         return Response({'error': 'No image provided'}, status=status.HTTP_400_BAD_REQUEST)
+#
+#     image = Image.open(io.BytesIO(image.read()))
+#     result = prediction(image)
+#     return Response({"result": f"Plant is affected by {result[0]}"}, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])

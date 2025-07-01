@@ -245,25 +245,25 @@
                                     </div>
                                     <div>
                                         <div style="display: flex; flex-direction: row; justify-content: space-between; position: relative">
-                                            <input type="text" value="Nairobi" readonly style="background: white; border-radius: 1rem; outline: 0; border: none; padding: 0.5rem 0.5rem" />
-                                            <span class="search-icon" style="background: transparent; position: absolute; right: 0.5rem; top: 0.4rem">&#128269;</span>
+                                            <input type="text" id="locationInput" value="Nairobi" style="background: white; border-radius: 1rem; outline: 0; border: none; padding: 0.5rem 0.5rem; width: 100%" />
+                                            <span class="search-icon" id="searchBtn" style="background: transparent; position: absolute; right: 0.5rem; top: 0.4rem; cursor: pointer">&#128269;</span>
                                         </div>
                                     </div>
                                     <div class="weather-main">
                                         <div class="weather-center">
                                             <div class="weather-bubble main">
-                                                <div class="temp">11.2°C</div>
-                                                <div class="desc">Clear</div>
+                                                <div class="temp" id="temperature"></div>
+                                                <div class="desc" id="condition"></div>
                                             </div>
                                         </div>
                                         <div class="weather-bubbles">
                                             <div class="weather-bubble">
                                                 <div>Humidity</div>
-                                                <div>43%</div>
+                                                <div id="humidity"></div>
                                             </div>
                                             <div class="weather-bubble">
                                                 <div>Wind</div>
-                                                <div>10.8 km/</div>
+                                                <div id="wind"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -902,6 +902,77 @@
             function hideError() {
                 errorMessage.style.display = "none";
             }
+        </script>
+
+        <script>
+            const API_URL = 'http://localhost:8000/weather';
+
+            const locationInput = document.getElementById('locationInput');
+            const searchBtn = document.getElementById('searchBtn');
+            const temperature = document.getElementById('temperature');
+            const condition = document.getElementById('condition');
+            const humidity = document.getElementById('humidity');
+            const wind = document.getElementById('wind');
+
+            function showError(message) {
+                temperature.textContent = '--°C';
+                condition.textContent = message;
+                humidity.textContent = '--%';
+                wind.textContent = '-- km/h';
+            }
+
+            async function fetchWeather(location) {
+                try {
+                    const response = await fetch(`${API_URL}?location=${encodeURIComponent(location)}`);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    if (!data || Object.keys(data).length === 0 || !data.location || !data.current) {
+                        showError('Location not found');
+                        return;
+                    }
+
+                    updateWeatherDisplay(data);
+
+                } catch (error) {
+                    console.error('Error fetching weather data:', error);
+                    showError('Error loading weather');
+                }
+            }
+
+            function updateWeatherDisplay(data) {
+                const { location, current } = data;
+
+                locationInput.value = location.name;
+
+                temperature.textContent = `${current.temp_c}°C`;
+                condition.textContent = current.condition.text;
+                humidity.textContent = `${current.humidity}%`;
+                wind.textContent = `${current.wind_kph} km/h`;
+            }
+
+            function handleSearch() {
+                const location = locationInput.value.trim();
+                if (location) {
+                    fetchWeather(location);
+                }
+            }
+
+            searchBtn.addEventListener('click', handleSearch);
+
+            locationInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleSearch();
+                }
+            });
+
+            locationInput.removeAttribute('readonly');
+
+            fetchWeather('Nairobi');
         </script>
     </body>
 </html>

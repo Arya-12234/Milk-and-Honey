@@ -18,5 +18,6 @@ urlpatterns = [
     path('tomato', views.tomato),
     path('detection', views.detection),
     path('chatbot', views.chatbot),
+    path('weather', views.weather),
     path("api/", include(router.urls)),
 ]
