@@ -4,6 +4,7 @@ from . import views
 
 router = routers.DefaultRouter()
 router.register("users", views.UserViewSet)
+router.register("growth-data", views.GrowthViewSet)
 
 urlpatterns = [
     path("", views.index),

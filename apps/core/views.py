@@ -17,14 +17,18 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.parsers import MultiPartParser
 # from PIL import Image
 # from model.main import prediction
-from .models import User
-from .serializers import UserSerializer
+from .models import User, Growth
+from .serializers import UserSerializer, GrowthSerializer
 import requests
 import dotenv
 dotenv.load_dotenv()
 
 from chatterbot import ChatBot
 from chatterbot.trainers import ChatterBotCorpusTrainer
+
+class GrowthViewSet(ModelViewSet):
+    queryset = Growth.objects.all().order_by('-created_at')
+    serializer_class = GrowthSerializer
 
 def convert_keys(obj):
     """Convert keys with hyphens to underscores in nested dictionaries."""

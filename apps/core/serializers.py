@@ -1,6 +1,11 @@
 from django.contrib.auth.hashers import make_password
 from rest_framework.serializers import ModelSerializer
-from .models import User
+from .models import User, Growth
+
+class GrowthSerializer(ModelSerializer):
+    class Meta:
+        model = Growth
+        fields = '__all__'
 
 class UserSerializer(ModelSerializer):
     class Meta:
