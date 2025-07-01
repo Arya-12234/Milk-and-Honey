@@ -19,20 +19,76 @@ from model.main import prediction
 from .models import User
 from .serializers import UserSerializer
 
-from chatterbot import ChatBot
-from chatterbot.trainers import ChatterBotCorpusTrainer
+# from chatterbot import ChatBot
+# from chatterbot.trainers import ChatterBotCorpusTrainer
+import os
+import google.generativeai as genai
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.views.decorators.csrf import csrf_exempt
+from dotenv import load_dotenv
+
+load_dotenv()  # loads .env if you're storing the key there
+genai.configure(api_key="AIzaSyBxadVk3AvVFgkE1oA8tMfTpbrql25T7Rg") # Better practice than hardcoding
+model = genai.GenerativeModel("gemini")  # or "gemini-pro-vision" for multimodal
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from django.views.decorators.csrf import csrf_exempt
+import google.generativeai as genai
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
+
+# Configure Gemini API key from environment variable
+genai.configure(api_key="AIzaSyBxadVk3AvVFgkE1oA8tMfTpbrql25T7Rg")
+
+# Initialize the Gemini model
+model = genai.GenerativeModel("gemini-2.5-flash")
+
+# Full context about Milk and Honey smart farm system
+SYSTEM_CONTEXT = """
+You are an expert assistant knowledgeable about 'Milk and Honey', a smart farm management system powered by AgroSense.
+
+### Problem Solved:
+Milk and Honey solves the critical issue of "Lack of Timely and Accurate Farm Insights" faced by smallholder farmers. Without real-time and precise data, farmers rely on guesswork or delayed advice, causing overwatering or underwatering, soil degradation, crop loss, wasted inputs, and low yields.
+
+### Services Provided:
+- Real-time monitoring of farm conditions
+- Data logging and analysis for actionable insights
+- Automated actions such as irrigation control and alerting
+- AI-powered plant disease detection through image analysis
+- Crop growth tracking to predict yields and optimize care
+
+### Sensors Available:
+- Soil pH sensors to monitor soil acidity or alkalinity
+- Soil moisture sensors to track water levels in the soil
+
+Milk and Honey empowers farmers with accurate, timely data and AI-driven insights to make informed decisions and improve crop productivity.
+"""
 
 @csrf_exempt
 @api_view(["POST"])
 def chatbot(request):
-    chatbot = ChatBot('Ron Obvious')
-    trainer = ChatterBotCorpusTrainer(chatbot)
-    trainer.train("chatterbot.corpus.english")
     try:
-        chat = chatbot.get_response("Hello, how are you today?")
-        return Response({'message': str(chat)})
+        user_input = request.data.get("message")
+        if not user_input:
+            return Response({"error": "No message provided"}, status=400)
+
+        # Combine the system context with user input for the prompt
+        full_prompt = f"{SYSTEM_CONTEXT}\n\nUser: {user_input}\nAssistant:"
+
+        # Get response from Gemini
+        response = model.generate_content(full_prompt)
+
+        return Response({'message': response.text})
+
     except Exception as e:
-        return Response({'message': f"Error: {str(e)}"}, status=500)
+        return Response({'error': f"Error: {str(e)}"}, status=500)
+
+
 
 @api_view(["POST"])
 @parser_classes([MultiPartParser])
